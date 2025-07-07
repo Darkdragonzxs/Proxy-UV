@@ -1,5 +1,5 @@
 self.__uv$config = {
-	prefix: "/ultraviolet/",
+	prefix: "/s/ultraviolet/",
 	bare: "https://full.boxathome.net/bare/",
 	encodeUrl: Ultraviolet.codec.xor.encode,
 	decodeUrl: Ultraviolet.codec.xor.decode,
