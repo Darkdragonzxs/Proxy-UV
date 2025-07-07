@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Oops! Page Not Found</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 15px 30px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>ERR. 404</h1>
+  <p>The page you're looking for doesn't exist. If you're using the proxy, press "register serviceworker."</p>
+  <button id="reloadBtn">Register serviceworker!!!</button>
+
+  <script>
+    const reloadBtn = document.getElementById('reloadBtn');
+    reloadBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
