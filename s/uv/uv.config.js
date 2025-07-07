@@ -1,6 +1,6 @@
 self.__uv$config = {
 	prefix: "/s/internet/",
-	bare: "https://bare.securedweb.ultimatearca.de",
+	bare: "https://full.boxathome.net/bare/",
 	encodeUrl: Ultraviolet.codec.xor.encode,
 	decodeUrl: Ultraviolet.codec.xor.decode,
 	handler: "/s/uv/uv.handler.js",
