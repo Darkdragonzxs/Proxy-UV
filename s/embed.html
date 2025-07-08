@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,7 +7,120 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <h1>Loading ts</h1>
+  <style>
+    :root {
+      --bg-light: #f0f4f8;
+      --bg-dark: #121212;
+      --text-light: #111;
+      --text-dark: #eee;
+      --highlight: #57a6ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg-light);
+      color: var(--text-light);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.4s, color 0.4s;
+      user-select: none;
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .loading-container {
+      text-align: center;
+      padding: 20px 40px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      background: #fff;
+      max-width: 320px;
+      width: 90%;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    body.dark .loading-container {
+      background: #2a2a2a;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      color: var(--highlight);
+    }
+
+    p {
+      margin: 0 0 20px 0;
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    .spinner {
+      margin: 0 auto;
+      width: 48px;
+      height: 48px;
+      border: 6px solid #ccc;
+      border-top-color: var(--highlight);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #theme-toggle {
+      margin-top: 20px;
+      padding: 6px 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--highlight);
+      color: white;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s;
+    }
+
+    #theme-toggle:hover {
+      background: #3b8cff;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-container">
+    <h1>Loading...</h1>
+    <p>Your browser experience is starting up</p>
+    <div class="spinner"></div>
+    <button id="theme-toggle">Toggle theme</button>
+  </div>
+
+  <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      // Optionally save preference to localStorage:
+      if(document.body.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
+    // Load saved theme
+    if(localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark');
+    }
+  </script>
     <script src="uv/uv.bundle.js" defer></script>
     <script src="uv/uv.config.js" defer></script>
     <script src="register-sw.js" defer></script>
