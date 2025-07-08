@@ -1,661 +1,462 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="relax">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZXS Proxy with DevTools</title>
-</head>
-<body>
-
-  <!-- Navbar & Controls -->
-  <header id="navbar">
-    <div class="nav-left">
-      <input type="text" id="url-input" placeholder="Search or enter URL..." autocomplete="off" />
-      <button id="go-button" aria-label="Go to URL">Go</button>
-      <button id="bookmark-button" title="Bookmark this page">☆</button>
-    </div>
-    <div class="nav-right">
-      <select id="theme-switcher" aria-label="Theme selector">
-        <option value="relax">Relax</option>
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="ocean">Ocean</option>
-      </select>
-      <button id="open-devtools" title="Toggle Developer Tools">🛠 DevTools</button>
-    </div>
-  </header>
-
-  <!-- Bookmarks -->
-  <section id="bookmarks-bar" aria-label="Bookmarks"></section>
-
-  <!-- Tab Bar -->
-  <nav id="tab-bar" aria-label="Tabs"></nav>
-
-  <!-- Tab Content Area -->
-  <main id="tab-content" role="main">
-    <!-- Each tab's iframe goes here -->
-  </main>
-
-  <!-- Developer Tools Panel -->
-  <aside id="devtools-panel" aria-label="Developer Tools" hidden>
-    <header id="devtools-header">
-      <h2>🧪 Developer Tools</h2>
-      <button id="close-devtools" title="Close DevTools">✖</button>
-    </header>
-
-    <!-- DevTools Tab Buttons -->
-    <div id="devtools-tabs">
-      <button data-tab="console" class="devtools-tab active">Console</button>
-      <button data-tab="cookies" class="devtools-tab">Cookies</button>
-      <button data-tab="dom" class="devtools-tab">DOM</button>
-      <button data-tab="storage" class="devtools-tab">Storage</button>
-    </div>
-
-    <!-- DevTools Content Area -->
-    <div id="devtools-content">
-      
-      <!-- Console -->
-      <section id="console-panel" class="devtools-section active" aria-labelledby="Console Tab">
-        <textarea id="console-input" placeholder="Enter JavaScript and hit Run..."></textarea>
-        <button id="run-js">Run</button>
-        <pre id="console-output" class="dev-output">[Console ready]</pre>
-      </section>
-
-      <!-- Cookies -->
-      <section id="cookies-panel" class="devtools-section" aria-labelledby="Cookies Tab">
-        <h3>Cookies</h3>
-        <pre id="cookie-data" class="dev-output">[Cookies will show here]</pre>
-      </section>
-
-      <!-- DOM Inspector -->
-      <section id="dom-panel" class="devtools-section" aria-labelledby="DOM Tab">
-        <h3>DOM Tree</h3>
-        <pre id="dom-tree" class="dev-output">[DOM structure will appear here]</pre>
-      </section>
-
-      <!-- Storage Inspector -->
-      <section id="storage-panel" class="devtools-section" aria-labelledby="Storage Tab">
-        <h3>localStorage / sessionStorage</h3>
-        <pre id="storage-data" class="dev-output">[Storage data will appear here]</pre>
-      </section>
-
-    </div>
-  </aside>
-
-  <!-- Floating DevTools Toggle Button (for mobile) -->
-  <button id="floating-devtools-toggle" title="Toggle DevTools">🛠</button>
-<style>
-/* ==========================
-   Global Theme Definitions
-   ========================== */
-
-:root {
-  --bg: #fdf7f1;
-  --fg: #3d3a4e;
-  --accent: #d9a7eb;
-  --accent-dark: #b97dd4;
-  --tab-bg: #f2eafa;
-  --console-bg: #f9f4ff;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --radius: 10px;
-  --transition: 0.3s ease;
-  --font: 'Segoe UI', sans-serif;
-  --header-height: 58px;
-  --dev-bg: #fff;
-  --input-bg: #fff;
-}
-
-[data-theme="dark"] {
-  --bg: #121212;
-  --fg: #eeeeee;
-  --accent: #7289da;
-  --accent-dark: #5b6eae;
-  --tab-bg: #1e1e1e;
-  --console-bg: #181818;
-  --shadow: rgba(255, 255, 255, 0.05);
-  --input-bg: #2c2c2c;
-  --dev-bg: #1a1a1a;
-}
-
-[data-theme="light"] {
-  --bg: #ffffff;
-  --fg: #222;
-  --accent: #7aa2f7;
-  --accent-dark: #547cc0;
-  --tab-bg: #f6f6f6;
-  --console-bg: #eeeeee;
-  --input-bg: #ffffff;
-  --dev-bg: #f4f4f4;
-}
-
-[data-theme="ocean"] {
-  --bg: #e0f7fa;
-  --fg: #004d40;
-  --accent: #00acc1;
-  --accent-dark: #007c91;
-  --tab-bg: #b2ebf2;
-  --console-bg: #d0f0f5;
-  --input-bg: #ffffff;
-  --dev-bg: #e0f4f7;
-}
-
-
-/* ==========================
-   Base Reset & Utilities
-   ========================== */
-
-* {
-  box-sizing: border-box;
-  transition: background var(--transition), color var(--transition), border var(--transition), transform var(--transition);
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--fg);
-  height: 100%;
-  overflow: hidden;
-}
-
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: 1rem;
-  border: none;
-  outline: none;
-}
-
-button {
-  cursor: pointer;
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  background: var(--accent);
-  color: white;
-  font-weight: bold;
-}
-
-button:hover {
-  background: var(--accent-dark);
-}
-
-
-/* ==========================
-   Header (Navigation Bar)
-   ========================== */
-
-#navbar {
-  height: var(--header-height);
-  background: var(--tab-bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--shadow);
-  position: relative;
-  z-index: 10;
-}
-
-.nav-left, .nav-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#url-input {
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  border: 2px solid var(--accent);
-  background: var(--input-bg);
-  width: 400px;
-  max-width: 60vw;
-}
-
-#bookmark-button {
-  font-size: 1.2rem;
-  padding: 6px 12px;
-  background: transparent;
-  color: var(--accent);
-}
-
-#bookmark-button:hover {
-  background: var(--accent);
-  color: white;
-}
-
-
-/* ==========================
-   Bookmarks Bar
-   ========================== */
-
-#bookmarks-bar {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  background: var(--tab-bg);
-  padding: 6px 10px;
-  gap: 8px;
-  border-bottom: 1px solid var(--shadow);
-}
-
-#bookmarks-bar .bookmark {
-  background: var(--accent);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-#bookmarks-bar .bookmark:hover {
-  background: var(--accent-dark);
-}
-
-
-/* ==========================
-   Tabs Area
-   ========================== */
-
-#tab-bar {
-  display: flex;
-  background: var(--tab-bg);
-  border-bottom: 1px solid var(--shadow);
-  overflow-x: auto;
-  padding: 4px 10px;
-  gap: 8px;
-}
-
-#tab-bar .tab {
-  padding: 10px 16px;
-  border-radius: 8px 8px 0 0;
-  background: transparent;
-  color: var(--fg);
-  cursor: pointer;
-  font-weight: 500;
-  border-bottom: 3px solid transparent;
-}
-
-#tab-bar .tab.active {
-  border-bottom: 3px solid var(--accent);
-  font-weight: bold;
-  color: var(--accent);
-}
-
-
-/* ==========================
-   Main Content (Iframes)
-   ========================== */
-
-#tab-content {
-  flex: 1;
-  position: relative;
-  background: var(--bg);
-}
-
-#tab-content iframe {
-  width: 100%;
-  height: calc(100vh - var(--header-height) - 120px);
-  border: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-
-/* ==========================
-   DevTools Panel
-   ========================== */
-
-#devtools-panel {
-  /* Hide by default */
-  display: none;
-
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  max-height: 60%;
-  background: var(--dev-bg);
-  color: var(--fg);
-  border-top: 2px solid var(--accent);
-  box-shadow: 0 -2px 8px var(--shadow);
-  flex-direction: column;
-  z-index: 99;
-
-  /* Make sure it can flex when shown */
-  /* Note: do NOT set display:flex here since default is hidden */
-}
-
-#devtools-panel.open {
-  /* Show panel */
-  display: flex;
-}
-
-/* You can keep the rest of your existing devtools styles as is */
-#devtools-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--tab-bg);
-  border-bottom: 1px solid var(--shadow);
-}
-
-#devtools-tabs {
-  display: flex;
-  background: var(--tab-bg);
-  border-bottom: 1px solid var(--shadow);
-}
-
-.devtools-tab {
-  flex: 1;
-  padding: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  color: var(--fg);
-  transition: background 0.2s;
-}
-
-.devtools-tab:hover {
-  background: var(--accent);
-  color: white;
-}
-
-.devtools-tab.active {
-  background: var(--accent-dark);
-  color: white;
-}
-
-#devtools-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  background: var(--console-bg);
-}
-
-.devtools-section {
-  display: none;
-}
-
-.devtools-section.active {
-  display: block;
-}
-
-.dev-output {
-  background: #00000015;
-  padding: 10px;
-  border-radius: 6px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-
-/* ==========================
-   Dev Console Specific
-   ========================== */
-
-#console-input {
-  width: 100%;
-  height: 70px;
-  resize: vertical;
-  font-family: monospace;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  background: var(--input-bg);
-  color: var(--fg);
-}
-
-
-/* ==========================
-   Floating DevTools Toggle
-   ========================== */
-
-#floating-devtools-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--accent);
-  color: white;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  font-size: 1.2rem;
-  z-index: 100;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px var(--shadow);
-}
-
-@media screen and (max-width: 768px) {
-  #floating-devtools-toggle {
-    display: flex;
-  }
-}
-
-
-/* ==========================
-   Animations (Optional)
-   ========================== */
-
-.fade-in {
-  animation: fadeIn 0.3s ease-in-out forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xenon Proxy Browser</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #f0f4f8;
+      --bg-dark: #121212;
+      --tab-bg-light: #ffffff;
+      --tab-bg-dark: #1e1e1e;
+      --tab-inactive-light: #e3eaf7;
+      --tab-inactive-dark: #2a2a2a;
+      --tab-active-light: #ffffff;
+      --tab-active-dark: #333333;
+      --text-light: #111;
+      --text-dark: #eee;
+      --bar-light: #dce3ec;
+      --bar-dark: #232323;
+      --border-light: #ccd2d9;
+      --border-dark: #444;
+      --highlight: #57a6ff;
+    }
+
+    body.light {
+      --bg: var(--bg-light);
+      --tab-bg: var(--tab-bg-light);
+      --tab-inactive: var(--tab-inactive-light);
+      --tab-active: var(--tab-active-light);
+      --text: var(--text-light);
+      --bar: var(--bar-light);
+      --border: var(--border-light);
+    }
+
+    body.dark {
+      --bg: var(--bg-dark);
+      --tab-bg: var(--tab-bg-dark);
+      --tab-inactive: var(--tab-inactive-dark);
+      --tab-active: var(--tab-active-dark);
+      --text: var(--text-dark);
+      --bar: var(--bar-dark);
+      --border: var(--border-dark);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    #top-bar, #toolbar {
+      background: var(--bar);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 40px;
+      padding: 0 10px;
+    }
+
+    #tabs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .tab {
+      background: var(--tab-inactive);
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: transform 0.3s ease, background 0.2s;
+      transform-origin: bottom;
+      animation: tabIn 0.4s ease;
+    }
+
+    @keyframes tabIn {
+      from { transform: scaleY(0.7); opacity: 0; }
+      to   { transform: scaleY(1); opacity: 1; }
+    }
+
+    .tab.active {
+      background: var(--tab-active);
+      font-weight: bold;
+      box-shadow: 0 -2px 0 var(--highlight) inset;
+    }
+
+    .tab .close {
+      color: #888;
+      cursor: pointer;
+    }
+
+    .tab .close:hover {
+      color: red;
+    }
+
+    .new-tab-btn {
+      font-size: 20px;
+      color: #888;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+    }
+
+    #theme-toggle {
+      border: none;
+      background: var(--tab-inactive);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      gap: 6px;
+    }
+
+    #nav-controls button {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    #address {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    #viewer {
+      flex: 1;
+      position: relative;
+      background: var(--tab-bg);
+    }
+
+    iframe, .start-screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    .start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      gap: 20px;
+      background: linear-gradient(120deg, #dceeff, #f0fff0);
+      animation: fadeIn 0.6s ease;
+    }
+
+    .start-screen h2 {
+      font-size: 2.2rem;
+      color: var(--highlight);
+      margin-bottom: 0;
+    }
+
+    .start-screen p {
+      font-size: 1rem;
+      color: var(--text);
+      opacity: 0.8;
+      margin-top: 0;
+    }
+
+    .start-screen ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .start-screen li {
+      background: var(--tab-inactive);
+      border: 1px solid var(--border);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .start-screen li:hover {
+      background: var(--tab-active);
+      color: var(--highlight);
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   </style>
-<script>
-// =====================
-// Global State
-// =====================
-const tabs = [];
-let currentTab = null;
-let tabIdCounter = 0;
+</head>
+<body class="light">
+  <div id="top-bar">
+    <div id="tabs">
+      <div class="new-tab-btn" id="new-tab">+</div>
+    </div>
+    <button id="theme-toggle">☀/🌙</button>
+  </div>
 
-// =====================
-// Tab + Iframe Logic
-// =====================
-function openTabFromInput() {
-  const input = document.getElementById("url-input").value.trim();
-  if (!input) return;
-  openTab(input);
-}
+  <div id="toolbar">
+    <div id="nav-controls">
+      <button id="back">⟵</button>
+      <button id="forward">⟶</button>
+      <button id="reload">⟳</button>
+    </div>
+    <span>🔒</span>
+    <input type="text" id="address" placeholder="Search or enter URL...">
+    <span>☆</span>
+  </div>
 
-function openTab(rawUrl) {
-  const url = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
-  const encoded = encodeURIComponent(url);
-  const finalUrl = `/s/embed.html#${decodeURIComponent(encoded)}`;
-  const iframe = document.createElement("iframe");
-  iframe.src = finalUrl;
-  iframe.dataset.tabId = tabIdCounter;
+  <div id="viewer">
+    <div class="start-screen" id="start-screen">
+      <h2>🌐 Welcome to Xenon</h2>
+      <ul>
+        <li onclick="quickLaunch('https://google.com')">🔍 Google</li>
+        <li onclick="quickLaunch('https://youtube.com')">📺 YouTube</li>
+        <li onclick="quickLaunch('https://easyfun.gg/embed/roblox')">🎮 Roblox</li>
+        <li onclick="quickLaunch('https://chat.openai.com')">🤖 ChatGPT</li>
+        <li onclick="quickLaunch('https://reddit.com')">📢 Reddit</li>
+        <li onclick="quickLaunch('https://zxs.netlify.app')">🌐 ZXS GAMES</li>
+      </ul>
+    </div>
+  </div>
+ <script>
+  const addressBar = document.getElementById('address');
+  const tabs = document.getElementById('tabs');
+  const viewer = document.getElementById('viewer');
+  const startScreen = document.getElementById('start-screen');
+  const newTabBtn = document.getElementById('new-tab');
+  const backBtn = document.getElementById('back');
+  const forwardBtn = document.getElementById('forward');
+  const reloadBtn = document.getElementById('reload');
+  const themeToggle = document.getElementById('theme-toggle');
 
-  const tab = {
-    id: tabIdCounter,
-    title: new URL(url).hostname,
-    url: finalUrl,
-    iframe
-  };
-  tabs.push(tab);
-  currentTab = tab.id;
-  tabIdCounter++;
+  let tabCounter = 0;
+  let currentTab = null;
 
-  updateTabs();
-  updateIframeView();
-  logDev(`Opened: ${url}`);
-}
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.remove('light');
+    document.body.classList.add('dark');
+  }
 
-function updateTabs() {
-  const tabBar = document.getElementById("tab-bar");
-  tabBar.innerHTML = "";
-
-  tabs.forEach(tab => {
-    const el = document.createElement("div");
-    el.className = `tab ${tab.id === currentTab ? "active" : ""}`;
-    el.textContent = tab.title;
-    el.onclick = () => switchTab(tab.id);
-    tabBar.appendChild(el);
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
   });
-}
 
-function switchTab(id) {
-  currentTab = id;
-  updateTabs();
-  updateIframeView();
-  logDev(`Switched to tab: ${id}`);
-}
-
-function updateIframeView() {
-  const container = document.getElementById("tab-content");
-  container.innerHTML = "";
-
-  const tab = tabs.find(t => t.id === currentTab);
-  if (!tab) return;
-
-  container.appendChild(tab.iframe);
-}
-
-// =====================
-// Bookmarks
-// =====================
-function addBookmark() {
-  const tab = tabs.find(t => t.id === currentTab);
-  if (!tab) return;
-
-  const bookmarksBar = document.getElementById("bookmarks-bar");
-  const div = document.createElement("div");
-  div.className = "bookmark";
-  div.textContent = new URL(tab.url.split("#")[1]).hostname;
-  div.onclick = () => openTab(tab.url.split("#")[1]);
-  bookmarksBar.appendChild(div);
-  logDev(`Bookmarked: ${tab.url}`);
-}
-
-// =====================
-// Themes
-// =====================
-function switchTheme(value) {
-  document.documentElement.setAttribute("data-theme", value);
-  logDev(`Theme changed to: ${value}`);
-}
-
-// =====================
-// Developer Tools
-// =====================
-function toggleDevTools() {
-  const panel = document.getElementById("devtools-panel");
-  if (panel.hasAttribute("hidden")) {
-    panel.removeAttribute("hidden");
-  } else {
-    panel.setAttribute("hidden", "true");
+  function normalizeInput(input) {
+    input = input.trim();
+    try {
+      new URL(input);
+      return input;
+    } catch {}
+    const hasProtocol = /^(https?|file|ftp|ws|wss):\/\//i.test(input);
+    const looksLikeDomain = /^[\w-]+(\.[\w-]+)+.*$/i.test(input);
+    if (!hasProtocol && looksLikeDomain) return "https://" + input;
+    if (!hasProtocol) return "https://www.startpage.com/search?q=" + encodeURIComponent(input);
+    return input;
   }
-}
 
-function switchDevTab(tabName) {
-  document.querySelectorAll(".devtools-section").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".devtools-tab").forEach(btn => btn.classList.remove("active"));
-
-  document.getElementById(`${tabName}-panel`).classList.add("active");
-  document.querySelector(`[data-tab='${tabName}']`).classList.add("active");
-
-  if (tabName === "cookies") loadCookies();
-  if (tabName === "dom") loadDOMTree();
-  if (tabName === "storage") loadStorage();
-}
-
-function runConsoleJS() {
-  const iframe = getActiveIframe();
-  const code = document.getElementById("console-input").value;
-  try {
-    const result = iframe.contentWindow.eval(code);
-    document.getElementById("console-output").textContent = `> ${code}\n${result}`;
-  } catch (e) {
-    document.getElementById("console-output").textContent = `> ${code}\n⚠️ ${e}`;
-  }
-}
-
-function loadCookies() {
-  const iframe = getActiveIframe();
-  try {
-    const cookies = iframe.contentWindow.document.cookie;
-    document.getElementById("cookie-data").textContent = cookies || "[No cookies]";
-  } catch {
-    document.getElementById("cookie-data").textContent = "[Cross-origin: cannot access cookies]";
-  }
-}
-
-function loadDOMTree() {
-  const iframe = getActiveIframe();
-  try {
-    const html = formatDOMTree(iframe.contentWindow.document.body, 0);
-    document.getElementById("dom-tree").textContent = html;
-  } catch {
-    document.getElementById("dom-tree").textContent = "[Cross-origin: cannot access DOM]";
-  }
-}
-
-function loadStorage() {
-  const iframe = getActiveIframe();
-  try {
-    const local = iframe.contentWindow.localStorage;
-    const session = iframe.contentWindow.sessionStorage;
-    let output = `localStorage:\n`;
-    for (let k in local) {
-      if (local.hasOwnProperty(k)) output += `  ${k}: ${local[k]}\n`;
-    }
-    output += `\nsessionStorage:\n`;
-    for (let k in session) {
-      if (session.hasOwnProperty(k)) output += `  ${k}: ${session[k]}\n`;
-    }
-    document.getElementById("storage-data").textContent = output;
-  } catch {
-    document.getElementById("storage-data").textContent = "[Cross-origin: cannot access storage]";
-  }
-}
-
-function formatDOMTree(node, depth = 0) {
-  if (!node || !node.nodeType) return "";
-  const indent = "  ".repeat(depth);
-  let result = `${indent}<${node.nodeName.toLowerCase()}>\n`;
-  if (node.children) {
-    for (let child of node.children) {
-      result += formatDOMTree(child, depth + 1);
+  function getFavicon(url) {
+    try {
+      const { hostname } = new URL(url);
+      return `https://www.google.com/s2/favicons?domain=${hostname}`;
+    } catch {
+      return `https://www.google.com/s2/favicons?domain=example.com`;
     }
   }
-  return result;
-}
 
-function getActiveIframe() {
-  const tab = tabs.find(t => t.id === currentTab);
-  return tab?.iframe;
-}
+  function quickLaunch(url) {
+    createTab(url, new URL(url).hostname);
+  }
 
-function logDev(msg) {
-  const out = document.getElementById("console-output");
-  if (out) out.textContent += `\n${msg}`;
-}
+  newTabBtn.addEventListener('click', () => openBlankTab());
 
-// =====================
-// Event Listeners
-// =====================
-document.getElementById("go-button").onclick = openTabFromInput;
-document.getElementById("bookmark-button").onclick = addBookmark;
-document.getElementById("theme-switcher").onchange = e => switchTheme(e.target.value);
-document.getElementById("run-js").onclick = runConsoleJS;
-document.getElementById("open-devtools").onclick = toggleDevTools;
-document.getElementById("close-devtools").onclick = toggleDevTools;
-document.getElementById("floating-devtools-toggle").onclick = toggleDevTools;
-document.querySelectorAll(".devtools-tab").forEach(btn => {
-  btn.addEventListener("click", () => switchDevTab(btn.dataset.tab));
-});
-  </script>
+  addressBar.addEventListener('keydown', (e) => {
+    if (e.key === "Enter") {
+      const url = normalizeInput(addressBar.value);
+      if (currentTab) {
+        const iframe = document.getElementById(`frame-${currentTab}`);
+        if (iframe) {
+          fadeOutIn(iframe, () => {
+            iframe.src = `/s/embed.html#${url}`;
+            startScreen.style.display = 'none';
+            updateAddressBar(url);
+          });
+        } else {
+          loadUrlInNewTab(url);
+        }
+      } else {
+        loadUrlInNewTab(url);
+      }
+    }
+  });
+
+  function loadUrlInNewTab(url) {
+    const label = new URL(url).hostname;
+    createTab(url, label);
+  }
+
+  backBtn.addEventListener('click', () => {
+    const iframe = document.getElementById(`frame-${currentTab}`);
+    if (iframe) iframe.contentWindow.history.back();
+  });
+
+  forwardBtn.addEventListener('click', () => {
+    const iframe = document.getElementById(`frame-${currentTab}`);
+    if (iframe) iframe.contentWindow.history.forward();
+  });
+
+  reloadBtn.addEventListener('click', () => {
+    const iframe = document.getElementById(`frame-${currentTab}`);
+    if (iframe) iframe.contentWindow.location.reload();
+  });
+
+  function updateAddressBar(url) {
+    try {
+      addressBar.value = decodeURIComponent(url || '');
+    } catch {
+      addressBar.value = url || '';
+    }
+  }
+
+  function createTab(url = '', label = 'New Tab') {
+    const tabId = `tab-${++tabCounter}`;
+    const favicon = url ? getFavicon(url) : 'https://www.google.com/s2/favicons?domain=about:blank';
+
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.id = tabId;
+    tab.innerHTML = `
+      <img src="${favicon}" width="14" height="14" style="border-radius:3px" />
+      ${label} <span class="close">×</span>`;
+    tabs.insertBefore(tab, newTabBtn);
+
+    let iframe = null;
+    if (url) {
+      iframe = document.createElement('iframe');
+      iframe.id = `frame-${tabId}`;
+      iframe.src = `/s/embed.html#${url}`;
+      iframe.style.display = 'none';
+      iframe.style.opacity = 0;
+      viewer.appendChild(iframe);
+    }
+
+    tab.addEventListener('click', (e) => {
+      if (e.target.classList.contains('close')) {
+        removeTab(tabId);
+      } else {
+        switchTab(tabId);
+      }
+    });
+
+    switchTab(tabId);
+  }
+
+  function switchTab(tabId) {
+    viewer.querySelectorAll('iframe').forEach(f => f.style.display = 'none');
+    tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const iframe = document.getElementById(`frame-${tabId}`);
+    const tab = document.getElementById(tabId);
+    if (tab) tab.classList.add('active');
+    currentTab = tabId;
+
+    if (iframe) {
+      iframe.style.display = 'block';
+      fadeIn(iframe);
+      const hash = iframe.src.split('#')[1];
+      updateAddressBar(hash);
+      startScreen.style.display = 'none';
+    } else {
+      startScreen.style.display = 'flex';
+      addressBar.value = '';
+    }
+  }
+
+  function removeTab(tabId) {
+    const tab = document.getElementById(tabId);
+    const iframe = document.getElementById(`frame-${tabId}`);
+    if (tab) tab.remove();
+    if (iframe) iframe.remove();
+
+    if (currentTab === tabId) {
+      const remaining = tabs.querySelectorAll('.tab');
+      if (remaining.length > 0) {
+        switchTab(remaining[0].id);
+      } else {
+        currentTab = null;
+        startScreen.style.display = 'flex';
+        addressBar.value = '';
+      }
+    }
+  }
+
+  function openBlankTab() {
+    createTab('', 'New Tab');
+  }
+
+  // Smooth fade in/out
+  function fadeIn(el) {
+    el.style.transition = 'opacity 0.3s ease';
+    el.style.opacity = 0;
+    requestAnimationFrame(() => {
+      el.style.opacity = 1;
+    });
+  }
+
+  function fadeOutIn(el, callback) {
+    el.style.transition = 'opacity 0.3s ease';
+    el.style.opacity = 0;
+    setTimeout(() => {
+      callback();
+      el.style.opacity = 0;
+      requestAnimationFrame(() => {
+        el.style.opacity = 1;
+      });
+    }, 300);
+  }
+
+  openBlankTab(); 
+</script>
 </body>
 </html>
